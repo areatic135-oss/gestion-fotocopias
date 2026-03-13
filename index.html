@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Fotocopias - ESRN 135</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <div id="login-container" class="card">
+        <h2>Acceso Administrativo</h2>
+        <p>ESRN 135 - Área TIC</p>
+        <form id="login-form">
+            <input type="email" id="email" value="areatic135@gmail.com" readonly>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+    </div>
+
+    <div id="app-container" class="card" style="display: none;">
+        <header>
+            <h1>Control de Copias</h1>
+            <button id="logout-btn" class="btn-small">Cerrar Sesión</button>
+        </header>
+
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="🔍 Buscar por nombre del alumno/profe...">
+            <div id="user-status" class="status-alert">
+                Busca un usuario para ver su saldo.
+            </div>
+        </div>
+
+        <hr>
+
+        <form id="copy-form">
+            <div class="form-group">
+                <input type="text" id="user-name" placeholder="Nombre y Apellido" required>
+                <input type="text" id="user-course" placeholder="Curso (ej: 4to 2da)">
+            </div>
+            
+            <div class="form-group">
+                <select id="user-role">
+                    <option value="Alumno">Alumno</option>
+                    <option value="Profesor">Profesor</option>
+                </select>
+                <select id="pay-method">
+                    <option value="Debe">Anotar (Deuda)</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                </select>
+            </div>
+
+            <div class="price-buttons">
+                <button type="button" onclick="setAmount(200)">Simple ($200)</button>
+                <button type="button" onclick="setAmount(250)">Doble ($250)</button>
+                <input type="number" id="custom-amount" placeholder="Otro monto $">
+            </div>
+
+            <button type="submit" class="btn-main">Registrar Movimiento</button>
+        </form>
+
+        <div class="footer-info">
+            <p>Alias: <strong>esrn135</strong> | WhatsApp: 2920-298994</p>
+            <button onclick="exportarCSV()" class="btn-report">Descargar Informe Mensual</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
