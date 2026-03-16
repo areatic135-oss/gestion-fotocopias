@@ -110,3 +110,123 @@ document.getElementById('user-name').addEventListener('input', (e) => {
 
 // Cargar la tabla apenas inicia
 actualizarHistorial();
+
+// ==========================================
+// 1. BUSCADOR INTELIGENTE (SALDO + HISTORIAL)
+// ==========================================
+document.getElementById('user-name').addEventListener('input', (e) => {
+    const nombreBuscado = e.target.value.trim();
+    actualizarHistorial(nombreBuscado);
+    
+    if (nombreBuscado === "") {
+        document.getElementById('deuda-total').innerText = "0";
+        document.getElementById('deuda-total').style.color = "inherit";
+        return;
+    }
+
+    db.collection("fotocopias")
+        .where("userName", "==", nombreBuscado)
+        .where("payMethod", "==", "Debe")
+        .onSnapshot((querySnapshot) => {
+            let total = 0;
+            querySnapshot.forEach((doc) => {
+                total += Number(doc.data().amount);
+            });
+            const displayDeuda = document.getElementById('deuda-total');
+            displayDeuda.innerText = total;
+            
+            // Sugerencia: Alerta Deudor Crónico (Color rojo si debe más de $2000)
+            displayDeuda.style.color = total >= 2000 ? "#e74c3c" : "#2ecc71";
+            if(total >= 2000) displayDeuda.style.fontWeight = "bold";
+        });
+});
+
+// ==========================================
+// 2. HISTORIAL CON BOTÓN "SALDAR DEUDA"
+// ==========================================
+function actualizarHistorial(nombreFiltro = "") {
+    const cuerpoTabla = document.getElementById('cuerpo-tabla');
+    let consulta = db.collection("fotocopias").orderBy("fecha", "desc").limit(15);
+
+    if (nombreFiltro !== "") {
+        consulta = db.collection("fotocopias").where("userName", "==", nombreFiltro).orderBy("fecha", "desc");
+    }
+
+    consulta.onSnapshot((querySnapshot) => {
+        cuerpoTabla.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+            const dato = doc.data();
+            const id = doc.id;
+            const fecha = dato.fecha ? new Date(dato.fecha.seconds * 1000).toLocaleDateString('es-AR') : '---';
+            const esDeuda = dato.payMethod === 'Debe';
+            
+            // Creamos la fila con un botón si es deuda
+            cuerpoTabla.innerHTML += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px;">${fecha}</td>
+                    <td style="padding: 8px;">${dato.userName}</td>
+                    <td style="padding: 8px;">$${dato.amount}</td>
+                    <td style="padding: 8px; color: ${esDeuda ? '#e74c3c' : '#27ae60'}">
+                        ${dato.payMethod}
+                        ${esDeuda ? `<button onclick="saldarDeuda('${id}')" style="margin-left:5px; font-size:10px; cursor:pointer;">✅ Pagar</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+    });
+}
+
+// Función para cambiar estado de 'Debe' a 'Pagado'
+function saldarDeuda(docId) {
+    if(confirm("¿Confirmas que el alumno pagó esta deuda?")) {
+        db.collection("fotocopias").doc(docId).update({
+            payMethod: "Efectivo"
+        }).then(() => console.log("Deuda saldada"));
+    }
+}
+
+// ==========================================
+// 3. EXPORTAR INFORME MENSUAL (CSV)
+// ==========================================
+async function exportarCSV() {
+    const querySnapshot = await db.collection("fotocopias").orderBy("fecha", "desc").get();
+    let csvContent = "\ufeffFecha,Nombre,Curso,Monto,Metodo\n";
+
+    querySnapshot.forEach((doc) => {
+        const d = doc.data();
+        const fecha = d.fecha ? new Date(d.fecha.seconds * 1000).toLocaleDateString('es-AR') : '---';
+        csvContent += `${fecha},${d.userName},${d.userCourse || 'N/A'},${d.amount},${d.payMethod}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Informe_Fotocopias_${new Date().toLocaleDateString()}.csv`;
+    link.click();
+}
+
+// ==========================================
+// 4. RESUMEN DE CAJA DIARIO
+// ==========================================
+function calcularCajaDelDia() {
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+
+    db.collection("fotocopias")
+        .where("fecha", ">=", hoy)
+        .onSnapshot((querySnapshot) => {
+            let recaudado = 0;
+            querySnapshot.forEach((doc) => {
+                if(doc.data().payMethod !== "Debe") {
+                    recaudado += Number(doc.data().amount);
+                }
+            });
+            // Si tenés un elemento con id 'caja-dia', lo muestra ahí
+            const cajaElement = document.getElementById('caja-dia');
+            if(cajaElement) cajaElement.innerText = "Hoy se recaudó: $" + recaudado;
+        });
+}
+
+// Iniciar funciones
+actualizarHistorial();
+calcularCajaDelDia();
