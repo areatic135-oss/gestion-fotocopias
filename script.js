@@ -71,3 +71,42 @@ document.getElementById('search-input').addEventListener('input', async (e) => {
 });
 
 function setAmount(val) { document.getElementById('custom-amount').value = val; }
+
+// Función para cargar historial general o filtrado por nombre
+function actualizarHistorial(nombreFiltro = "") {
+    const cuerpoTabla = document.getElementById('cuerpo-tabla');
+    let consulta = db.collection("fotocopias").orderBy("fecha", "desc").limit(15);
+
+    // Si estás buscando a alguien, filtramos la tabla
+    if (nombreFiltro.trim() !== "") {
+        consulta = db.collection("fotocopias")
+            .where("userName", "==", nombreFiltro.trim())
+            .orderBy("fecha", "desc");
+    }
+
+    consulta.onSnapshot((querySnapshot) => {
+        cuerpoTabla.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+            const dato = doc.data();
+            const fecha = dato.fecha ? new Date(dato.fecha.seconds * 1000).toLocaleDateString('es-AR') : '---';
+            const colorEstado = dato.payMethod === 'Debe' ? 'color: #e74c3c; font-weight: bold;' : 'color: #27ae60;';
+
+            cuerpoTabla.innerHTML += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px;">${fecha}</td>
+                    <td style="padding: 8px;">${dato.userName}</td>
+                    <td style="padding: 8px;">$${dato.amount}</td>
+                    <td style="padding: 8px; ${colorEstado}">${dato.payMethod}</td>
+                </tr>
+            `;
+        });
+    });
+}
+
+// Escuchar cuando escribís en el campo de nombre para filtrar la tabla
+document.getElementById('user-name').addEventListener('input', (e) => {
+    actualizarHistorial(e.target.value);
+});
+
+// Cargar la tabla apenas inicia
+actualizarHistorial();

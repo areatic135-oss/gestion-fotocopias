@@ -64,6 +64,23 @@
             <button type="submit" class="btn-main">Registrar Movimiento</button>
         </form>
 
+        <hr>
+<h3>Historial y Búsqueda</h3>
+<div id="contenedor-historial" style="overflow-x:auto; margin-top: 15px;">
+    <table id="tabla-historial" style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead>
+            <tr style="background: #f0f0f0; text-align: left;">
+                <th style="padding: 8px;">Fecha</th>
+                <th style="padding: 8px;">Nombre</th>
+                <th style="padding: 8px;">Monto</th>
+                <th style="padding: 8px;">Estado</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpo-tabla">
+            </tbody>
+    </table>
+</div>
+
         <div class="footer-info">
             <p>Alias: <strong>esrn135</strong> | WhatsApp: 2920-298994</p>
             <button onclick="exportarCSV()" class="btn-report">Descargar Informe Mensual</button>
